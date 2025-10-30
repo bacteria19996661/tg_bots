@@ -8,7 +8,7 @@ from peewee import DoesNotExist
 import re
 
 from states.custom_states import States
-from config_data.config import MENU_STRUCTURE, MAIN_MENU_ITEMS, ADMIN_CHAT_ID
+from config_data.config import MENU_STRUCTURE, MAIN_MENU_ITEMS, ADMIN_CHAT_ID, CANCEL, COMMANDS, DEFAULT_COMMANDS
 from datetime import datetime
 
 import logging
@@ -90,8 +90,17 @@ def show_main_menu(message: Message) -> None:
         ).order_by(Menu.menu_id)
 
         button_titles = [item.menu_title for item in main_menu_items]
-        button_titles.append('Записаться на занятие')
-        markup = create_keyboard(button_titles, add_back_button=False)  # В главном меню нет кнопки "Назад"
+
+        # Проверяем есть ли активное состояние заявки, чтобы можно было её отменить
+        current_state = bot.get_state(message.from_user.id, message.chat.id)
+        if current_state and current_state.startswith('States:order'):
+            # Есть активная заявка - показываем ОТМЕНУ
+            button_titles.append('Отмена')
+        else:
+            # Нет активной заявки - показываем ЗАПИСЬ
+            button_titles.append('Записаться на занятие')
+
+        markup = create_keyboard(button_titles, add_back_button=False)
 
         bot.send_message(
             message.chat.id,
@@ -132,6 +141,19 @@ def handle_order_button(message: Message) -> None:
     Обрабатывает нажатие кнопки "Записаться на занятие"
     """
     start_order(message)
+
+
+@bot.message_handler(func=lambda message: message.text.lower() in CANCEL, state='*')
+def handle_cancel_anywhere(message: Message):
+    """
+    Обрабатывает отмену из любого состояния
+    """
+    current_state = bot.get_state(message.from_user.id, message.chat.id)
+    if current_state and 'order' in current_state:
+        cancel_order(message)
+    else:
+        bot.delete_state(message.from_user.id, message.chat.id)
+        # show_main_menu(message)
 
 
 @bot.message_handler(commands=['order'])
@@ -214,7 +236,8 @@ def get_phone_text(message: Message) -> None:
     """
     Обрабатывает номер телефона, введенный текстом
     """
-    if message.text == "Отмена":
+    # Проверка ОНМЕНЫ перед началом обработки
+    if message.text.lower() in CANCEL:
         cancel_order(message)
         return
 
@@ -222,18 +245,20 @@ def get_phone_text(message: Message) -> None:
 
     # Валидация номера
     def validate_phone(phone):
+        e_num_text = ("ВЫ НЕ ЗАВЕРШИЛИ ПРОЦЕСС ЗАЯВКИ или ввели некорректный номер.\n"
+                      "Введите номер в формате +7900 ... или 8900... от 10 цифр.\n"
+                      "ЕСЛИ ПЕРЕДУМАЛИ, выберите команду /cancel или напишите «ОТМЕНА»")
+
+        # Проверка на допустимые символы
         if not re.match(r'^[\d\s()+.-]+$', phone):
-            return False, "Номер содержит недопустимые символы. Допустимы: цифры, пробелы, (), +, -, ."
+            return False, e_num_text
 
         # Убирает все нецифровые символы для проверки длины
         digits_only = re.sub(r'[^\d]', '', phone)
 
-        if len(digits_only) < 10:
-            return False, "Номер должен быть не менее 10 цифр."
-
-        if len(digits_only) >= 11:
-            if not digits_only.startswith(('7', '8')):
-                return False, "Номер должен начинаться с 7, 8 или +7"
+        # Проверка длины и начала номера
+        if len(digits_only) < 10 or len(digits_only) > 11 or not digits_only.startswith(('7', '8')):
+            return False, e_num_text
 
         return True, phone
 
@@ -267,7 +292,7 @@ def get_name(message: Message) -> None:
     """
     Обрабатывает ввод имени
     """
-    if message.text == "Отмена":
+    if message.text.lower() in CANCEL:
         cancel_order(message)
         return
 
@@ -322,7 +347,7 @@ def get_service_type(message: Message) -> None:
     """
     Обрабатывает выбор услуги
     """
-    if message.text == "Отмена":
+    if message.text.lower() in CANCEL:
         cancel_order(message)
         return
 
@@ -349,7 +374,7 @@ def get_comment_and_save(message: Message) -> None:
     """
     Обрабатывает комментарий и сохраняет заявку с информацией о программе
     """
-    if message.text == "Отмена":
+    if message.text.lower() in CANCEL:
         cancel_order(message)
         return
 
@@ -427,14 +452,11 @@ def help_command(message: Message) -> None:
     """
     Показывает справку по командам
     """
-    help_text = """
-Доступные команды:
+    help_text = "Доступные команды:\n\n"
 
-/start - Запустить бота
-/menu - Открыть меню ссылок 
-/order - Записаться
+    for command, description in DEFAULT_COMMANDS:
+        help_text += f"/{command} - {description}\n"
 
-    """
     bot.send_message(message.chat.id, help_text)
 
 

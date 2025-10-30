@@ -63,5 +63,10 @@ DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
     ("menu", "Открыть меню"),
     ("order", "Записаться на занятие"),
+    ("cancel", "Отмена"),
     ("help", "Помощь"),
 )
+
+CANCEL = ['Отмена', 'отмена', 'ОТМЕНА', 'cancel', 'Cancel', 'CANCEL', '/cancel']
+
+COMMANDS = ['/menu', '/start', 'Назад', 'Назад в меню']
