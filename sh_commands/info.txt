@@ -1,0 +1,22 @@
+# Произвольные команды crontab
+/usr/bin/python3 /home/b/bacter35/public_html/yogita_bot/utils/converter_db-xlsx.py
+/usr/bin/python3 /home/b/bacter35/public_html/yogita_bot/main.py
+
+# Командная строка crontab
+/bin/bash ~/public_html/yogita_bot/utils/stop_bot.sh
+
+# Точечная установка зависимостей crontab
+pip3 install --user openpyxl==3.1.5
+pip3 install --upgrade pip
+
+
+# Перейти в директорию со скриптом
+cd ~/public_html/yogita_bot/sh_commands/
+
+# Сделать файл исполняемым
+chmod +x start_bot.sh
+
+
+# Команды для очистки базы данных SQLite
+sqlite> .open C:\Users\...\yogita.ru\database.db
+sqlite> DELETE FROM sqlite_sequence WHERE name='orders';

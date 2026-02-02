@@ -1,0 +1,35 @@
+# ============= ПАКЕТЫ ДЛЯ БОТА =============
+pyTelegramBotAPI==4.15.2
+telebot==0.0.5
+python-dotenv==1.0.0
+peewee==3.18.3
+
+# ============= ОБРАБОТКА ДАННЫХ =============
+pandas==1.5.3
+openpyxl==3.1.5
+numpy==1.24.4
+
+# ============= ЗАВИСИМОСТИ =============
+# Для pandas и работы с датами
+python-dateutil==2.9.0.post0
+pytz==2025.2
+six==1.17.0
+
+# Для requests
+certifi==2025.10.5
+charset-normalizer==3.4.4
+idna==3.11
+urllib3==2.5.0
+
+# Для openpyxl
+et_xmlfile==2.0.0
+
+# Общие
+packaging==25.0
+typing_extensions==4.15.0
+
+# ============= ПАРСИНГ =============
+requests==2.32.5
+selenium==4.16.0
+websocket-client==1.9.0  # для Selenium
+webdriver-manager==4.0.2
